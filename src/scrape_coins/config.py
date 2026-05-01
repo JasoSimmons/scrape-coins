@@ -93,6 +93,31 @@ class DashboardFiltersCfg(BaseModel):
     use_discovered_at_if_no_pair_created: bool = True
 
 
+class TeamFirstSortWeights(BaseModel):
+    """How to rank coins for a team-led redeploy (dashboard sort: team_first).
+
+    All components are normalized into ~0..1 before weighting. Weights need not sum
+    to 1 — we normalize internally so edits are forgiving.
+    """
+
+    idea_score: float = 0.42
+    peak_mc: float = 0.18
+    peak_holders: float = 0.14
+    holder_distribution: float = 0.12  # 1 - top10 concentration at peak
+    drawdown: float = 0.10
+    social_links: float = 0.04
+
+
+class TeamFirstSortCfg(BaseModel):
+    weights: TeamFirstSortWeights
+    # log10(ath_mc_usd) normalization window (defaults bracket $300k–$5M)
+    peak_mc_log_min: float = 5.48
+    peak_mc_log_max: float = 6.70
+    # log10(holder count) normalization window (defaults ~100–16k holders)
+    holders_log_min: float = 2.00
+    holders_log_max: float = 4.20
+
+
 class AppConfig(BaseModel):
     discovery: DiscoveryCfg
     snapshot: SnapshotCfg
@@ -102,6 +127,7 @@ class AppConfig(BaseModel):
     scheduler: SchedulerCfg
     http: HttpCfg
     dashboard_filters: DashboardFiltersCfg
+    team_first_sort: TeamFirstSortCfg
 
 
 class Env(BaseSettings):

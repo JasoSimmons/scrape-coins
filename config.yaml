@@ -20,6 +20,20 @@ dashboard_filters:
   # Tokens discovered before we grabbed pair_created_at still show via discovered_at fallback.
   use_discovered_at_if_no_pair_created: true
 
+# Dashboard sort: "team_first" — what to run with your team first (composite score).
+team_first_sort:
+  weights:
+    idea_score: 0.42           # narrative + organic traction proxy
+    peak_mc: 0.18              # bigger peaks = more proven concept
+    peak_holders: 0.14         # more holders at peak = wider resonance
+    holder_distribution: 0.12  # lower top10 concentration at peak = less insider-y
+    drawdown: 0.10            # deeper wipeouts = more upside if you execute
+    social_links: 0.04        # presence of website/x/tg on profile
+  peak_mc_log_min: 5.48
+  peak_mc_log_max: 6.70
+  holders_log_min: 2.00
+  holders_log_max: 4.20
+
 snapshot:
   # DexScreener allows up to 30 token addresses per /tokens/v1 call.
   batch_size: 30

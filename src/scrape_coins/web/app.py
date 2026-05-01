@@ -12,7 +12,8 @@ from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from sqlalchemy import and_, func as sqlfunc, or_, select, true as sql_true
+from sqlalchemy import and_, case, cast, func as sqlfunc, or_, select, true as sql_true
+from sqlalchemy.types import Float as SqlFloat
 
 from ..classifier import run_classifier
 from ..config import get_config, reload_config
@@ -88,6 +89,91 @@ def _best_candidate_order(direction: str):
         Classification.drawdown_from_ath.desc().nullslast(),
         Token.ath_mc_usd.desc().nullslast(),
     )
+
+
+def _clamp01(expr):
+    return case(
+        (expr < 0, 0.0),
+        (expr > 1, 1.0),
+        else_=expr,
+    )
+
+
+def _lin_norm(expr, lo: float, hi: float):
+    denom = hi - lo
+    if denom <= 0:
+        return cast(0.0, SqlFloat)
+    return _clamp01((expr - lo) / denom)
+
+
+def _team_first_score_expr(cfg):
+    """Higher = better opportunity for a team-led redeploy (dashboard ordering)."""
+    tfs = cfg.team_first_sort
+    w = tfs.weights.model_dump()
+    total = float(sum(max(0.0, float(v)) for v in w.values())) or 1.0
+    nw = {k: max(0.0, float(v)) / total for k, v in w.items()}
+
+    idea = cast(sqlfunc.coalesce(Classification.idea_score, 0.0), SqlFloat)
+
+    ath = cast(sqlfunc.coalesce(Token.ath_mc_usd, 0.0), SqlFloat)
+    peak_mc_n = _lin_norm(
+        sqlfunc.log10(sqlfunc.max(ath, 1.0)),
+        float(tfs.peak_mc_log_min),
+        float(tfs.peak_mc_log_max),
+    )
+
+    holders_raw = cast(
+        sqlfunc.coalesce(
+            Enrichment.holders_count_at_peak,
+            Enrichment.holders_count,
+            0,
+        ),
+        SqlFloat,
+    )
+    peak_holders_n = _lin_norm(
+        sqlfunc.log10(sqlfunc.max(holders_raw, 1.0)),
+        float(tfs.holders_log_min),
+        float(tfs.holders_log_max),
+    )
+
+    top10 = cast(sqlfunc.coalesce(Enrichment.top10_concentration_at_peak, 0.5), SqlFloat)
+    distribution_n = _clamp01(1.0 - top10)
+
+    cur_mc = cast(sqlfunc.coalesce(Token.current_mc_usd, 0.0), SqlFloat)
+    ath2 = cast(sqlfunc.coalesce(Token.ath_mc_usd, 0.0), SqlFloat)
+    dd = case(
+        (ath2 > 0, 1.0 - (cur_mc / ath2)),
+        else_=cast(0.0, SqlFloat),
+    )
+    drawdown_n = _clamp01(dd)
+
+    social_n = cast(
+        sqlfunc.coalesce(
+            case((Token.website_url.is_not(None), 0.34), else_=0.0)
+            + case((Token.twitter_url.is_not(None), 0.33), else_=0.0)
+            + case((Token.telegram_url.is_not(None), 0.33), else_=0.0),
+            0.0,
+        ),
+        SqlFloat,
+    )
+    social_n = _clamp01(social_n)
+
+    score = (
+        nw["idea_score"] * idea
+        + nw["peak_mc"] * peak_mc_n
+        + nw["peak_holders"] * peak_holders_n
+        + nw["holder_distribution"] * distribution_n
+        + nw["drawdown"] * drawdown_n
+        + nw["social_links"] * social_n
+    )
+    return cast(score, SqlFloat)
+
+
+def _team_first_order(cfg, direction: str):
+    score = _team_first_score_expr(cfg)
+    if direction == "asc":
+        return (score.asc().nullslast(),)
+    return (score.desc().nullslast(),)
 
 
 def _fmt_money(v: float | None) -> str:
@@ -253,12 +339,14 @@ async def index(
         if only_candidates and qp_sort is None:
             effective_sort = "best_candidate"
         else:
-            effective_sort = "current_vol"
+            effective_sort = "team_first"
 
     # Main query ------------------------------------------------------------
     sm = get_sessionmaker()
     if effective_sort == "best_candidate":
         order_exprs = _best_candidate_order(direction)
+    elif effective_sort == "team_first":
+        order_exprs = _team_first_order(cfg, direction)
     else:
         sort_col = SORT_COLUMNS.get(effective_sort, Token.current_volume_24h_usd)
         order_exprs = (

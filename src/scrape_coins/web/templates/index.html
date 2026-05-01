@@ -12,7 +12,8 @@
       <label class="chip">
         sort
         <select name="sort">
-          <option value="best_candidate" {% if sort=='best_candidate' %}selected{% endif %}>★ best candidates</option>
+          <option value="team_first" {% if sort=='team_first' %}selected{% endif %}>★ best for our team</option>
+          <option value="best_candidate" {% if sort=='best_candidate' %}selected{% endif %}>★ passed filters</option>
           <option value="current_vol"      {% if sort=='current_vol' %}selected{% endif %}>volume 24h</option>
           <option value="current_mc"       {% if sort=='current_mc' %}selected{% endif %}>market cap</option>
           <option value="current_liq"      {% if sort=='current_liq' %}selected{% endif %}>liquidity</option>
