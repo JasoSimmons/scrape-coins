@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block title %}scrape-coins{% endblock %}
+
+{% block content %}
+  <section class="control-bar">
+    <form method="get" action="/" class="filters">
+      <input type="search" name="q" placeholder="Search symbol or name…" value="{{ search_q }}" autocomplete="off" />
+      <label class="chip">
+        <input type="checkbox" name="only_candidates" value="true" {% if only_candidates %}checked{% endif %} />
+        candidates only
+      </label>
+      <label class="chip">
+        sort
+        <select name="sort">
+          <option value="best_candidate" {% if sort=='best_candidate' %}selected{% endif %}>★ best candidates</option>
+          <option value="current_vol"      {% if sort=='current_vol' %}selected{% endif %}>volume 24h</option>
+          <option value="current_mc"       {% if sort=='current_mc' %}selected{% endif %}>market cap</option>
+          <option value="current_liq"      {% if sort=='current_liq' %}selected{% endif %}>liquidity</option>
+          <option value="change_24h"       {% if sort=='change_24h' %}selected{% endif %}>24h change</option>
+          <option value="change_1h"        {% if sort=='change_1h' %}selected{% endif %}>1h change</option>
+          <option value="age"              {% if sort=='age' %}selected{% endif %}>age</option>
+          <option value="peak_mc"          {% if sort=='peak_mc' %}selected{% endif %}>peak MC</option>
+          <option value="drawdown"         {% if sort=='drawdown' %}selected{% endif %}>drawdown</option>
+          <option value="idea_score"       {% if sort=='idea_score' %}selected{% endif %}>idea score</option>
+        </select>
+      </label>
+      <label class="chip">
+        dir
+        <select name="direction">
+          <option value="desc" {% if direction=='desc' %}selected{% endif %}>desc</option>
+          <option value="asc"  {% if direction=='asc'  %}selected{% endif %}>asc</option>
+        </select>
+      </label>
+      <button type="submit" class="btn-primary">apply</button>
+    </form>
+    <div class="stats">
+      <span><strong>{{ total_tracked }}</strong><span class="muted">/</span>{{ total_tracked_all }} tracked</span>
+      <span class="dot">·</span>
+      <span><strong class="accent">{{ total_candidates }}</strong> candidates</span>
+      <span class="dot">·</span>
+      <span class="muted">peak ${{ '{:,.0f}'.format(config.classifier.peak_mc_min_usd) }}–${{ '{:,.0f}'.format(config.classifier.peak_mc_max_usd) }}</span>
+      {% if age_filter_enabled_ui %}
+        <span class="dot">·</span>
+        <span class="muted">≤ <strong>{{ within_hours_ui }}</strong>h since listing</span>
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="ds-table-wrap">
+    <table class="ds-table">
+      <thead>
+        <tr>
+          <th class="col-rank">#</th>
+          <th class="col-token">TOKEN</th>
+          <th class="num">AGE</th>
+          <th class="num">PRICE</th>
+          <th class="num">5M</th>
+          <th class="num">1H</th>
+          <th class="num">6H</th>
+          <th class="num">24H</th>
+          <th class="num">TXNS 24H</th>
+          <th class="num">VOL 24H</th>
+          <th class="num">LIQ</th>
+          <th class="num">MCAP</th>
+          <th class="num accent-col">PEAK MC</th>
+          <th class="num accent-col">DRAW</th>
+          <th class="num accent-col">IDEA</th>
+          <th class="col-links"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in coins %}
+          {% set t = row.token %}
+          {% set buys = t.current_buys_24h or 0 %}
+          {% set sells = t.current_sells_24h or 0 %}
+          <tr class="ds-row {% if row.is_candidate %}is-candidate{% endif %}" onclick="window.location.href='/coin/{{ t.address }}'">
+            <td class="col-rank muted">{{ loop.index }}</td>
+            <td class="col-token">
+              <div class="token-cell">
+                <div class="token-img-wrap">
+                  <div class="token-img placeholder">{{ (t.symbol or '?')[0] }}</div>
+                  {% if t.image_url %}
+                    <img class="token-img" src="{{ t.image_url }}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()" />
+                  {% endif %}
+                </div>
+                <div class="token-meta">
+                  <div class="token-line">
+                    <span class="token-sym">{{ t.symbol or '—' }}</span>
+                    <span class="token-name">{{ t.name or t.address[:6] + '…' + t.address[-4:] }}</span>
+                    {% if row.is_candidate %}<span class="badge candidate" title="Passes redeploy filter">★</span>{% endif %}
+                    {% if t.pair_dex_id %}<span class="badge dex">{{ t.pair_dex_id }}</span>{% endif %}
+                  </div>
+                </div>
+              </div>
+            </td>
+            <td class="num mono muted">{{ row.age_hours | age }}</td>
+            <td class="num mono">{{ t.current_price_usd | price | safe }}</td>
+            <td class="num mono {{ t.current_price_change_5m_pct | change_class }}">{{ t.current_price_change_5m_pct | change }}</td>
+            <td class="num mono {{ t.current_price_change_1h_pct | change_class }}">{{ t.current_price_change_1h_pct | change }}</td>
+            <td class="num mono {{ t.current_price_change_6h_pct | change_class }}">{{ t.current_price_change_6h_pct | change }}</td>
+            <td class="num mono {{ t.current_price_change_24h_pct | change_class }}">{{ t.current_price_change_24h_pct | change }}</td>
+            <td class="num mono">
+              <div class="bs-row">
+                <span class="up">{{ buys | count }}</span>
+                <span class="muted">/</span>
+                <span class="down">{{ sells | count }}</span>
+              </div>
+            </td>
+            <td class="num mono">{{ t.current_volume_24h_usd | money }}</td>
+            <td class="num mono">{{ t.current_liq_usd | money }}</td>
+            <td class="num mono">{{ t.current_mc_usd | money }}</td>
+            <td class="num mono accent-col">{{ t.ath_mc_usd | money }}</td>
+            <td class="num mono accent-col {% if row.drawdown and row.drawdown > 0.5 %}down{% endif %}">{{ row.drawdown | pct }}</td>
+            <td class="num accent-col">
+              <div class="score-cell">
+                <div class="score-bar"><span style="width:{{ row.idea_score_pct }}%"></span></div>
+                <span class="score-num">{{ row.idea_score_pct }}</span>
+              </div>
+            </td>
+            <td class="col-links" onclick="event.stopPropagation();">
+              {% if t.pair_url %}<a href="{{ t.pair_url }}" target="_blank" rel="noopener" title="DexScreener">DS</a>{% endif %}
+              {% if t.twitter_url %}<a href="{{ t.twitter_url }}" target="_blank" rel="noopener" title="Twitter">𝕏</a>{% endif %}
+              {% if t.telegram_url %}<a href="{{ t.telegram_url }}" target="_blank" rel="noopener" title="Telegram">tg</a>{% endif %}
+              {% if t.website_url %}<a href="{{ t.website_url }}" target="_blank" rel="noopener" title="Website">www</a>{% endif %}
+            </td>
+          </tr>
+        {% else %}
+          <tr><td colspan="16" class="muted center pad">no coins yet — let the scheduler run, or hit the buttons in the topbar.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+{% endblock %}

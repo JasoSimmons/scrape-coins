@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}{{ token.symbol or 'coin' }} · scrape-coins{% endblock %}
+
+{% block content %}
+  <a class="back" href="/">← back</a>
+
+  <header class="coin-header">
+    {% if token.image_url %}
+      <img class="thumb large" src="{{ token.image_url }}" alt="" onerror="this.style.display='none'" />
+    {% endif %}
+    <div>
+      <h1>{{ token.symbol or 'UNKNOWN' }}</h1>
+      <div class="muted">{{ token.name or '' }}</div>
+      <div class="muted xsmall mono">{{ token.address }}</div>
+      <div class="links">
+        {% if token.pair_url %}<a href="{{ token.pair_url }}" target="_blank" rel="noopener">DexScreener</a>{% endif %}
+        {% if token.website_url %}<a href="{{ token.website_url }}" target="_blank" rel="noopener">website</a>{% endif %}
+        {% if token.twitter_url %}<a href="{{ token.twitter_url }}" target="_blank" rel="noopener">twitter</a>{% endif %}
+        {% if token.telegram_url %}<a href="{{ token.telegram_url }}" target="_blank" rel="noopener">telegram</a>{% endif %}
+      </div>
+    </div>
+    <div class="header-stats">
+      <div><span class="label">peak MC</span><span class="value">{{ token.ath_mc_usd | money }}</span></div>
+      <div><span class="label">drawdown</span><span class="value">{{ cls.drawdown_from_ath | pct if cls else '—' }}</span></div>
+      <div><span class="label">since ATH</span><span class="value">{{ cls.hours_since_ath | age if cls else '—' }}</span></div>
+      <div><span class="label">idea score</span><span class="value">{{ ((cls.idea_score or 0) * 100)|int }}/100</span></div>
+    </div>
+  </header>
+
+  <section class="grid two">
+    <div class="card">
+      <h2>verdict</h2>
+      <p class="verdict {% if cls and cls.is_redeploy_candidate %}good{% else %}bad{% endif %}">
+        {% if cls and cls.is_redeploy_candidate %}REDEPLOY CANDIDATE{% else %}NOT A CANDIDATE{% endif %}
+      </p>
+      <h3>passed checks</h3>
+      <ul class="checks pass">{% for r in pass_reasons %}<li>{{ r }}</li>{% else %}<li class="muted">none</li>{% endfor %}</ul>
+      <h3>failed / unknown</h3>
+      <ul class="checks fail">{% for r in fail_reasons %}<li>{{ r }}</li>{% else %}<li class="muted">none</li>{% endfor %}</ul>
+    </div>
+
+    <div class="card">
+      <h2>idea score breakdown</h2>
+      <table class="breakdown">
+        <thead><tr><th>signal</th><th>value</th><th>score</th></tr></thead>
+        <tbody>
+          {% for k, v in breakdown.items() %}
+          <tr>
+            <td>{{ k }}</td>
+            <td class="muted">{{ v.value if 'value' in v else '' }}</td>
+            <td class="num">
+              <div class="score-bar small"><span style="width:{{ ((v.score or 0) * 100)|int }}%"></span></div>
+              <span class="xsmall">{{ ((v.score or 0) * 100)|int }}</span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card full">
+    <h2>market cap history</h2>
+    <canvas id="spark" height="200"></canvas>
+  </section>
+
+  <section class="card full">
+    <h2>recent snapshots</h2>
+    <table class="snaps">
+      <thead><tr><th>time</th><th class="num">price</th><th class="num">MC</th><th class="num">liq</th><th class="num">vol 24h</th><th class="num">buys</th><th class="num">sells</th></tr></thead>
+      <tbody>
+        {% for s in snaps[-50:]|reverse %}
+        <tr>
+          <td class="mono xsmall">{{ s.taken_at.isoformat(timespec='minutes') }}</td>
+          <td class="num">{{ '%.6f' % s.price_usd if s.price_usd is not none else '—' }}</td>
+          <td class="num">{{ s.market_cap_usd | money }}</td>
+          <td class="num">{{ s.liquidity_usd | money }}</td>
+          <td class="num">{{ s.volume_24h_usd | money }}</td>
+          <td class="num">{{ s.txns_24h_buys if s.txns_24h_buys is not none else '—' }}</td>
+          <td class="num">{{ s.txns_24h_sells if s.txns_24h_sells is not none else '—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+  <script>
+    const spark = {{ spark_json|safe }};
+    if (spark.length > 1) {
+      const c = document.getElementById('spark');
+      const ctx = c.getContext('2d');
+      c.width = c.parentNode.clientWidth - 32;
+      const w = c.width, h = c.height;
+      ctx.clearRect(0, 0, w, h);
+      const mcs = spark.map(s => s.mc).filter(v => v != null);
+      const min = Math.min(...mcs), max = Math.max(...mcs);
+      const pad = 10;
+      ctx.strokeStyle = '#7cf'; ctx.lineWidth = 2; ctx.beginPath();
+      spark.forEach((s, i) => {
+        if (s.mc == null) return;
+        const x = pad + (i / (spark.length - 1)) * (w - pad * 2);
+        const y = h - pad - ((s.mc - min) / (max - min || 1)) * (h - pad * 2);
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+    }
+  </script>
+{% endblock %}
