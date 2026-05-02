@@ -24,6 +24,7 @@ dependencies = [
 
 [project.scripts]
 scrape-coins = "scrape_coins.cli:app"
+app = "scrape_coins.web.app:app"
 
 [build-system]
 requires = ["hatchling"]
