@@ -24,19 +24,17 @@ dependencies = [
 
 [project.scripts]
 scrape-coins = "scrape_coins.cli:app"
+app = "api.main:app"
 
-# Vercel resolves `module:var` to `module/path.py` on disk. Our app module lives at
-# `src/scrape_coins/web/app.py`, so use the `src.` prefix (do not add `app` to
-# [project.scripts] — that would install a broken console entry locally).
 [tool.vercel]
-entrypoint = "src.scrape_coins.web.app:app"
+entrypoint = "api.main:app"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/scrape_coins"]
+packages = ["src/scrape_coins", "api"]
 
 [tool.ruff]
 line-length = 100
