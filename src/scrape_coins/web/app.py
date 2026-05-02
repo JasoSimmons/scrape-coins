@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -40,6 +41,11 @@ TEMPLATES = Jinja2Templates(directory=str(WEB_DIR / "templates"))
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
+    # APScheduler is for long-running `scrape-coins serve`; serverless has no persistent job loop.
+    if os.environ.get("VERCEL"):
+        log.info("web.scheduler_skipped", reason="vercel")
+        yield
+        return
     sched = build_scheduler()
     sched.start()
     log.info("web.scheduler_started")

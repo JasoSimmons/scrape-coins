@@ -130,6 +130,11 @@ class AppConfig(BaseModel):
     team_first_sort: TeamFirstSortCfg
 
 
+def _default_db_path() -> str:
+    """Vercel's filesystem is read-only except /tmp; default there when deploying."""
+    return "/tmp/coins.db" if os.environ.get("VERCEL") else "coins.db"
+
+
 class Env(BaseSettings):
     """Environment-only settings (secrets, paths, log level)."""
 
@@ -137,7 +142,7 @@ class Env(BaseSettings):
 
     helius_api_key: str = ""
     scrape_coins_config: str = "config.yaml"
-    scrape_coins_db: str = "coins.db"
+    scrape_coins_db: str = Field(default_factory=_default_db_path)
     web_host: str = "127.0.0.1"
     web_port: int = 8000
     log_level: str = "INFO"
