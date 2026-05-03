@@ -458,7 +458,6 @@ async def index(
             # Vercel: demo rows hydrate on startup; fallback text if skipped and still empty.
             "serverless_empty_hint": bool(os.environ.get("VERCEL"))
             and total_tracked_all == 0,
-            "vercel_hosting_banner": bool(os.environ.get("VERCEL")),
         },
     )
 

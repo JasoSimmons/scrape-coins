@@ -9,12 +9,6 @@
       <span class="mono">discover</span> → <span class="mono">snapshot</span> → <span class="mono">classify</span> in the header.
       SQLite on Vercel is under <span class="mono">/tmp</span> (not durable); heavy jobs often need <span class="mono">scrape-coins serve</span> on Fly/Railway/Render instead.
     </aside>
-  {% elif vercel_hosting_banner %}
-    <aside class="deploy-hint deploy-hint--info" role="note">
-      <strong>Vercel preview.</strong>
-      Showing instant demo listings on first cold start — not live DexScreener data unless you sync from the header.
-      Rows reset after cold starts (<span class="mono">/tmp</span>). For persistence + cron, deploy <span class="mono">scrape-coins serve</span> on a VPS or PaaS.
-    </aside>
   {% endif %}
   <section class="control-bar">
     <form method="get" action="/" class="filters">

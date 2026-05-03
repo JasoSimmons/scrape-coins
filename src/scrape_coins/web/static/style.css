@@ -371,6 +371,7 @@ main {
   box-shadow: none;
 }
 
+.ds-table tbody td {
   padding: 6px 10px;
   border-bottom: 1px solid var(--ds-border-soft);
   vertical-align: middle;
@@ -394,7 +395,8 @@ main {
   background: var(--ds-hover);
 }
 
-.ds-table tbody tr.is-candidate td {
+/* Single left accent per row — shadow on every td stacked into bright vertical stripes. */
+.ds-table tbody tr.is-candidate td:first-child {
   box-shadow: inset 3px 0 0 var(--ds-green);
 }
 
