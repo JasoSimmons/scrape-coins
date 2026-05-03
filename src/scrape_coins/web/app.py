@@ -491,6 +491,7 @@ async def coin_detail(request: Request, address: str):
             "breakdown": breakdown,
             "pass_reasons": json.loads(cls.pass_reasons_json) if cls and cls.pass_reasons_json else [],
             "fail_reasons": json.loads(cls.fail_reasons_json) if cls and cls.fail_reasons_json else [],
+            "now": datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC"),
         },
     )
 

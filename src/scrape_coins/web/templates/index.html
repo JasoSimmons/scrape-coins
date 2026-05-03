@@ -18,7 +18,8 @@
   {% endif %}
   <section class="control-bar">
     <form method="get" action="/" class="filters">
-      <input type="search" name="q" placeholder="Search symbol or name…" value="{{ search_q }}" autocomplete="off" />
+      <span class="filters-label">FILTER</span>
+      <input type="search" name="q" placeholder="Search pairs…" value="{{ search_q }}" autocomplete="off" />
       <label class="chip">
         <input type="checkbox" name="only_candidates" value="true" {% if only_candidates %}checked{% endif %} />
         candidates only
@@ -66,20 +67,20 @@
       <thead>
         <tr>
           <th class="col-rank">#</th>
-          <th class="col-token">TOKEN</th>
+          <th class="col-token">PAIR / TOKEN</th>
           <th class="num">AGE</th>
           <th class="num">PRICE</th>
           <th class="num">5M</th>
           <th class="num">1H</th>
           <th class="num">6H</th>
           <th class="num">24H</th>
-          <th class="num">TXNS 24H</th>
+          <th class="num">TXNS</th>
           <th class="num">VOL 24H</th>
-          <th class="num">LIQ</th>
+          <th class="num">LIQUIDITY</th>
           <th class="num">MCAP</th>
-          <th class="num accent-col">PEAK MC</th>
-          <th class="num accent-col">DRAW</th>
-          <th class="num accent-col">IDEA</th>
+          <th class="num meta-col meta-col-first">PEAK MC</th>
+          <th class="num meta-col">DRAWDOWN</th>
+          <th class="num meta-col">IDEA</th>
           <th class="col-links"></th>
         </tr>
       </thead>
@@ -91,25 +92,25 @@
           <tr class="ds-row {% if row.is_candidate %}is-candidate{% endif %}" onclick="window.location.href='/coin/{{ t.address }}'">
             <td class="col-rank muted">{{ loop.index }}</td>
             <td class="col-token">
-              <div class="token-cell">
-                <div class="token-img-wrap">
+              <div class="pair-row">
+                <div class="token-img-wrap ds-avatar">
                   <div class="token-img placeholder">{{ (t.symbol or '?')[0] }}</div>
                   {% if t.image_url %}
                     <img class="token-img" src="{{ t.image_url }}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()" />
                   {% endif %}
                 </div>
-                <div class="token-meta">
-                  <div class="token-line">
+                <div class="pair-info">
+                  <div class="pair-line-top">
                     <span class="token-sym">{{ t.symbol or '—' }}</span>
-                    <span class="token-name">{{ t.name or t.address[:6] + '…' + t.address[-4:] }}</span>
-                    {% if row.is_candidate %}<span class="badge candidate" title="Passes redeploy filter">★</span>{% endif %}
-                    {% if t.pair_dex_id %}<span class="badge dex">{{ t.pair_dex_id }}</span>{% endif %}
+                    {% if t.pair_dex_id %}<span class="dex-pill">{{ t.pair_dex_id }}</span>{% endif %}
+                    {% if row.is_candidate %}<span class="boost-dot" title="Redeploy candidate"></span>{% endif %}
                   </div>
+                  <div class="pair-line-sub muted">{{ t.name or (t.address[:6] + '…' + t.address[-4:]) }}</div>
                 </div>
               </div>
             </td>
             <td class="num mono muted">{{ row.age_hours | age }}</td>
-            <td class="num mono">{{ t.current_price_usd | price | safe }}</td>
+            <td class="num mono price-cell">{{ t.current_price_usd | price | safe }}</td>
             <td class="num mono {{ t.current_price_change_5m_pct | change_class }}">{{ t.current_price_change_5m_pct | change }}</td>
             <td class="num mono {{ t.current_price_change_1h_pct | change_class }}">{{ t.current_price_change_1h_pct | change }}</td>
             <td class="num mono {{ t.current_price_change_6h_pct | change_class }}">{{ t.current_price_change_6h_pct | change }}</td>
@@ -124,9 +125,9 @@
             <td class="num mono">{{ t.current_volume_24h_usd | money }}</td>
             <td class="num mono">{{ t.current_liq_usd | money }}</td>
             <td class="num mono">{{ t.current_mc_usd | money }}</td>
-            <td class="num mono accent-col">{{ t.ath_mc_usd | money }}</td>
-            <td class="num mono accent-col {% if row.drawdown and row.drawdown > 0.5 %}down{% endif %}">{{ row.drawdown | pct }}</td>
-            <td class="num accent-col">
+            <td class="num mono meta-col meta-col-first">{{ t.ath_mc_usd | money }}</td>
+            <td class="num mono {% if row.drawdown and row.drawdown > 0.5 %}down{% endif %} meta-col">{{ row.drawdown | pct }}</td>
+            <td class="num meta-col">
               <div class="score-cell">
                 <div class="score-bar"><span style="width:{{ row.idea_score_pct }}%"></span></div>
                 <span class="score-num">{{ row.idea_score_pct }}</span>
