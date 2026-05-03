@@ -86,8 +86,8 @@ class DashboardFiltersCfg(BaseModel):
     """Default UI filters applied on `/` when no query-params override."""
 
     # Only show coins whose DexScreener pair is younger than this many hours,
-    # based on Token.pair_created_at (best proxy for listing age).
-    max_pair_age_hours: int = Field(default=48, ge=0)
+    # based on Token.pair_created_at (best proxy for listing age). Default ~1 year.
+    max_pair_age_hours: int = Field(default=8760, ge=0)
     enabled: bool = True
     # If True and pair_created_at is NULL, fallback to discovery time.
     use_discovered_at_if_no_pair_created: bool = True

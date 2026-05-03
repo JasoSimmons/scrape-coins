@@ -15,6 +15,13 @@ from ..logging_setup import get_logger
 
 log = get_logger(__name__)
 
+DEXSCREENER_PAID_BOOST_SOURCES = frozenset(
+    {
+        "dexscreener_token_boosts_latest",
+        "dexscreener_token_boosts_top",
+    }
+)
+
 
 def _ts(epoch_ms: int | None) -> datetime | None:
     if not epoch_ms:
@@ -106,6 +113,7 @@ async def _upsert_from_profile(
             existing = await session.get(Token, address)
             socials = _socials(p.get("links"))
             now = datetime.utcnow()
+            is_paid_boost = source in DEXSCREENER_PAID_BOOST_SOURCES
             if existing is None:
                 token = Token(
                     address=address,
@@ -117,6 +125,7 @@ async def _upsert_from_profile(
                     telegram_url=socials["telegram"],
                     other_links_json=json.dumps(socials["other"]) if socials["other"] else None,
                     discovery_source=source,
+                    dexscreener_paid_boost=is_paid_boost,
                     last_seen_at=now,
                 )
                 session.add(token)
@@ -133,6 +142,8 @@ async def _upsert_from_profile(
                     existing.twitter_url = socials["twitter"]
                 if not existing.telegram_url:
                     existing.telegram_url = socials["telegram"]
+                if is_paid_boost:
+                    existing.dexscreener_paid_boost = True
                 existing.last_seen_at = now
         await session.commit()
     return inserted

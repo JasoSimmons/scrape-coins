@@ -16,6 +16,7 @@ from .logging_setup import configure_logging
 from .workers.discovery import run_discovery
 from .workers.enrich import run_enrichment
 from .workers.snapshot import prune_inactive, run_snapshot
+from .export_csv import export_tokens_csv
 
 app = typer.Typer(no_args_is_help=True, add_completion=False)
 console = Console()
@@ -99,6 +100,35 @@ def prune() -> None:
     asyncio.run(init_db())
     n = asyncio.run(prune_inactive())
     console.print(f"[yellow]pruned[/yellow] {n} tokens")
+
+
+@app.command("export-csv")
+def export_csv_cmd(
+    out: str = typer.Option(
+        "coins_export.csv", "--out", "-o", help="Output CSV path"
+    ),
+    only_candidates: bool = typer.Option(
+        False,
+        "--only-candidates",
+        help="Only tokens marked as redeploy candidates",
+    ),
+    only_dexscreener_paid: bool = typer.Option(
+        False,
+        "--only-dexscreener-paid",
+        help="Only tokens seen on DexScreener paid boost feeds (boosts/latest, boosts/top)",
+    ),
+) -> None:
+    """Export tokens (+ classification + enrichment) to a CSV file."""
+    _setup()
+    asyncio.run(init_db())
+    n = asyncio.run(
+        export_tokens_csv(
+            out,
+            only_candidates=only_candidates,
+            only_dexscreener_paid_boost=only_dexscreener_paid,
+        )
+    )
+    console.print(f"[green]✓[/green] wrote [bold]{n}[/bold] rows to [cyan]{out}[/cyan]")
 
 
 @app.command()

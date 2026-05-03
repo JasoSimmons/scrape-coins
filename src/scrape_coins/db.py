@@ -80,6 +80,8 @@ class Token(Base):
     last_seen_at: Mapped[Optional[datetime]] = mapped_column(DateTime, index=True)
     discovered_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     discovery_source: Mapped[Optional[str]] = mapped_column(String)
+    # True once seen on DexScreener paid boost feeds (/token-boosts/*), regardless of discover order.
+    dexscreener_paid_boost: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
 
     snapshots: Mapped[list["PriceSnapshot"]] = relationship(
         back_populates="token",
@@ -210,6 +212,7 @@ _NEW_COLUMNS: list[tuple[str, str, str]] = [
     ("tokens", "current_price_change_1h_pct", "REAL"),
     ("tokens", "current_price_change_6h_pct", "REAL"),
     ("tokens", "current_price_change_24h_pct", "REAL"),
+    ("tokens", "dexscreener_paid_boost", "INTEGER NOT NULL DEFAULT 0"),
     ("price_snapshots", "price_change_5m_pct", "REAL"),
     ("price_snapshots", "price_change_1h_pct", "REAL"),
     ("price_snapshots", "price_change_6h_pct", "REAL"),
@@ -233,6 +236,26 @@ def _apply_migrations(sync_conn) -> None:
                 )
             except Exception:
                 pass
+    _backfill_dexscreener_paid_boost(sync_conn)
+
+
+def _backfill_dexscreener_paid_boost(sync_conn) -> None:
+    """Mark tokens whose first ingest was from DexScreener boost (paid promo) feeds."""
+    try:
+        rows = sync_conn.exec_driver_sql("PRAGMA table_info(tokens)").fetchall()
+    except Exception:
+        return
+    if not rows or not any(row[1] == "dexscreener_paid_boost" for row in rows):
+        return
+    try:
+        sync_conn.exec_driver_sql(
+            "UPDATE tokens SET dexscreener_paid_boost = 1 "
+            "WHERE discovery_source IN ("
+            "'dexscreener_token_boosts_latest', 'dexscreener_token_boosts_top'"
+            ")"
+        )
+    except Exception:
+        pass
 
 
 async def init_db() -> None:

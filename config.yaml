@@ -14,9 +14,9 @@ discovery:
   chain_id: solana
 
 dashboard_filters:
-  # Default "/" view: newest listings only — great for scouting fresh meme runners.
+  # Default "/" view: max age since pair listing (pair_created_at, or discovered_at fallback).
   enabled: true
-  max_pair_age_hours: 48
+  max_pair_age_hours: 8760  # 365 days
   # Tokens discovered before we grabbed pair_created_at still show via discovered_at fallback.
   use_discovered_at_if_no_pair_created: true
 
