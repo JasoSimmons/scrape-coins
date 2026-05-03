@@ -306,7 +306,12 @@ async def index(
     sort: str | None = Query(None),
     direction: str = Query("desc"),
     only_candidates: bool = Query(False),
-    limit: int = Query(200, ge=1, le=2000),
+    limit: int | None = Query(
+        None,
+        ge=1,
+        le=50000,
+        description="Max rows to show (capped by config dashboard_filters.max_list_limit)",
+    ),
     q: str | None = Query(None, description="Filter by symbol/name substring"),
     within_hours: int | None = Query(
         None, ge=-1, le=24 * 366, description="Listing age <= N hours (-1 disables age filter)"
@@ -315,6 +320,11 @@ async def index(
 ):
     cfg = get_config()
     df = cfg.dashboard_filters
+    cap = df.max_list_limit
+    default_lim = min(df.default_list_limit, cap)
+    eff_limit = limit if limit is not None else default_lim
+    eff_limit = max(1, min(int(eff_limit), cap))
+
     now = datetime.utcnow()
 
     # Age window ------------------------------------------------------------
@@ -376,7 +386,7 @@ async def index(
                     Token.address.ilike(like),
                 )
             )
-        query = query.order_by(*order_exprs).limit(limit)
+        query = query.order_by(*order_exprs).limit(eff_limit)
         rows = (await s.execute(query)).all()
 
     coins = []
@@ -432,7 +442,7 @@ async def index(
             "direction": direction,
             "only_candidates": only_candidates,
             "search_q": q or "",
-            "limit": limit,
+            "limit": eff_limit,
             "config": cfg,
             # Window-scoped stats (respects listing-age cutoff)
             "total_tracked": total_tracked,

@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -86,11 +86,20 @@ class DashboardFiltersCfg(BaseModel):
     """Default UI filters applied on `/` when no query-params override."""
 
     # Only show coins whose DexScreener pair is younger than this many hours,
-    # based on Token.pair_created_at (best proxy for listing age). Default ~1 year.
-    max_pair_age_hours: int = Field(default=8760, ge=0)
+    # based on Token.pair_created_at (best proxy for listing age).
+    max_pair_age_hours: int = Field(default=2160, ge=0)  # ~90 days
     enabled: bool = True
     # If True and pair_created_at is NULL, fallback to discovery time.
     use_discovered_at_if_no_pair_created: bool = True
+    # Homepage table: rows per load (omit ?limit= to use default).
+    default_list_limit: int = Field(default=500, ge=1, le=50000)
+    max_list_limit: int = Field(default=3000, ge=1, le=50000)
+
+    @model_validator(mode="after")
+    def _coerce_list_limits(self) -> DashboardFiltersCfg:
+        if self.default_list_limit > self.max_list_limit:
+            self.default_list_limit = self.max_list_limit
+        return self
 
 
 class TeamFirstSortWeights(BaseModel):

@@ -10,15 +10,27 @@ discovery:
     - dexscreener_token_boosts_top           # top boosted
     - dexscreener_search_terms               # see search_terms below
   # Free-text searches against DexScreener — useful to seed broad SOL coverage.
-  search_terms: ["SOL", "pump", "bonk", "wif", "moon"]
+  search_terms:
+    - SOL
+    - pump
+    - bonk
+    - wif
+    - moon
+    - meme
+    - usa
+    - cat
+    - dog
+    - ai16z
   chain_id: solana
 
 dashboard_filters:
   # Default "/" view: max age since pair listing (pair_created_at, or discovered_at fallback).
   enabled: true
-  max_pair_age_hours: 8760  # 365 days
+  max_pair_age_hours: 2160  # ~90 days (3 months)
   # Tokens discovered before we grabbed pair_created_at still show via discovered_at fallback.
   use_discovered_at_if_no_pair_created: true
+  default_list_limit: 800
+  max_list_limit: 4000
 
 # Dashboard sort: "team_first" — what to run with your team first (composite score).
 team_first_sort:
