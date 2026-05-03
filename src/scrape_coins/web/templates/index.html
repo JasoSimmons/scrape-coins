@@ -4,12 +4,16 @@
 {% block content %}
   {% if serverless_empty_hint %}
     <aside class="deploy-hint" role="status">
-      <strong>Empty database.</strong>
-      On Vercel there is no hourly scheduler and SQLite lives under <span class="mono">/tmp</span>, so you start from zero until you run the pipeline once.
-      Use the header buttons:
-      <span class="mono">discover</span> → <span class="mono">snapshot</span> → <span class="mono">classify</span>
-      (<span class="mono">enrich</span> needs <span class="mono">HELIUS_API_KEY</span> in env).
-      Long runs may hit serverless timeouts; for a persistent DB and automatic ticks, run <span class="mono">scrape-coins serve</span> locally or on Fly/Railway/Render.
+      <strong>Still empty.</strong>
+      Demo seed was skipped (<span class="mono">VERCEL_SKIP_DEMO_SEED</span>?), or hydration failed — run
+      <span class="mono">discover</span> → <span class="mono">snapshot</span> → <span class="mono">classify</span> in the header.
+      SQLite on Vercel is under <span class="mono">/tmp</span> (not durable); heavy jobs often need <span class="mono">scrape-coins serve</span> on Fly/Railway/Render instead.
+    </aside>
+  {% elif vercel_hosting_banner %}
+    <aside class="deploy-hint deploy-hint--info" role="note">
+      <strong>Vercel preview.</strong>
+      Showing instant demo listings on first cold start — not live DexScreener data unless you sync from the header.
+      Rows reset after cold starts (<span class="mono">/tmp</span>). For persistence + cron, deploy <span class="mono">scrape-coins serve</span> on a VPS or PaaS.
     </aside>
   {% endif %}
   <section class="control-bar">

@@ -57,6 +57,15 @@ a:hover { text-decoration: underline; }
   color: var(--text);
 }
 
+.deploy-hint--info {
+  background: rgba(124, 255, 255, 0.05);
+  border-bottom-color: rgba(124, 255, 255, 0.2);
+}
+
+.deploy-hint--info strong {
+  color: var(--accent-2);
+}
+
 /* ---------------- Topbar ---------------- */
 
 .topbar {

@@ -258,8 +258,16 @@ def _backfill_dexscreener_paid_boost(sync_conn) -> None:
         pass
 
 
+def _maybe_seed_vercel_demo(sync_conn) -> None:
+    """Populate demo listings on cold Vercel so the homepage is not blank."""
+    from .vercel_demo_seed import apply_vercel_demo_if_empty
+
+    apply_vercel_demo_if_empty(sync_conn, now=datetime.utcnow())
+
+
 async def init_db() -> None:
     engine = get_engine()
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
         await conn.run_sync(_apply_migrations)
+        await conn.run_sync(_maybe_seed_vercel_demo)
