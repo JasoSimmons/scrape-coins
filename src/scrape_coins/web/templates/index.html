@@ -63,6 +63,8 @@
   </section>
 
   <section class="ds-table-wrap">
+    {# Inner horizontal scroll keeps thead out of an overflow scrollport so rows don't overlap headers. #}
+    <div class="ds-table-x-scroll">
     <table class="ds-table">
       <thead>
         <tr>
@@ -145,5 +147,6 @@
         {% endfor %}
       </tbody>
     </table>
+    </div>
   </section>
 {% endblock %}

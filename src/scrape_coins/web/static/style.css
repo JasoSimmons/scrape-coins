@@ -326,10 +326,19 @@ main {
 /* ---------- Pair table (DexScreener-like) ---------- */
 
 .ds-table-wrap {
-  overflow-x: auto;
+  overflow: visible;
   background: var(--ds-bg);
   border: none;
   border-bottom: 1px solid var(--ds-border);
+}
+
+/* Horizontal scroll only — avoids making the table a nested vertical scrollport, which breaks
+   `position: sticky` on thead and causes header/body overlap in several browsers. */
+.ds-table-x-scroll {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+  overscroll-behavior-x: contain;
 }
 
 .ds-table {
@@ -341,8 +350,9 @@ main {
 }
 
 .ds-table thead {
+  /* keep above body rows without sticky (see thead th below) */
   position: relative;
-  z-index: 20;
+  z-index: 2;
 }
 
 .ds-table thead th {
@@ -355,14 +365,12 @@ main {
   padding: 10px;
   text-align: left;
   border-bottom: 1px solid var(--ds-border-strong);
-  position: sticky;
-  top: 48px;
-  z-index: 25;
+  /* Static header: sticky + overflow-x wrappers caused thead/tbody overlap in Chrome/Safari. */
+  position: static;
   white-space: nowrap;
-  box-shadow: 0 1px 0 var(--ds-border);
+  box-shadow: none;
 }
 
-.ds-table tbody td {
   padding: 6px 10px;
   border-bottom: 1px solid var(--ds-border-soft);
   vertical-align: middle;
@@ -425,9 +433,7 @@ main {
 }
 
 .ds-table thead th.meta-col-first {
-  box-shadow:
-    inset 1px 0 0 var(--ds-border-strong),
-    0 1px 0 var(--ds-border);
+  box-shadow: inset 1px 0 0 var(--ds-border-strong);
 }
 
 .ds-table tbody tr.ds-row:hover td.meta-col {
