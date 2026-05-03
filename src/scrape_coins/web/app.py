@@ -443,6 +443,9 @@ async def index(
             "age_filter_enabled_ui": cutoff is not None,
             "age_cutoff_text": cutoff.isoformat(timespec="seconds") if cutoff else None,
             "now": now.strftime("%Y-%m-%d %H:%M UTC"),
+            # Vercel: fresh /tmp DB + no APScheduler — table stays empty until manual runs.
+            "serverless_empty_hint": bool(os.environ.get("VERCEL"))
+            and total_tracked_all == 0,
         },
     )
 

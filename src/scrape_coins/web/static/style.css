@@ -35,6 +35,28 @@ html, body {
 a { color: var(--accent-2); text-decoration: none; }
 a:hover { text-decoration: underline; }
 
+/* ---------------- Deploy hint (Vercel empty DB) ---------------- */
+
+.deploy-hint {
+  margin: 0;
+  padding: 10px 18px;
+  background: rgba(245, 177, 74, 0.08);
+  border-bottom: 1px solid rgba(245, 177, 74, 0.25);
+  color: var(--muted-2);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.deploy-hint strong {
+  color: var(--warn);
+}
+
+.deploy-hint .mono {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text);
+}
+
 /* ---------------- Topbar ---------------- */
 
 .topbar {
