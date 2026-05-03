@@ -333,8 +333,14 @@ main {
 .ds-table {
   width: 100%;
   min-width: 1180px;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   font-size: 12px;
+}
+
+.ds-table thead {
+  position: relative;
+  z-index: 20;
 }
 
 .ds-table thead th {
@@ -344,18 +350,14 @@ main {
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  padding: 8px 10px;
+  padding: 10px;
   text-align: left;
-  border-bottom: 1px solid var(--ds-border);
+  border-bottom: 1px solid var(--ds-border-strong);
   position: sticky;
   top: 48px;
-  z-index: 15;
+  z-index: 25;
   white-space: nowrap;
-}
-
-.ds-table th.num,
-.ds-table td.num {
-  text-align: right;
+  box-shadow: 0 1px 0 var(--ds-border);
 }
 
 .ds-table tbody td {
@@ -363,7 +365,14 @@ main {
   border-bottom: 1px solid var(--ds-border-soft);
   vertical-align: middle;
   white-space: nowrap;
-  background: var(--ds-bg);
+  background-color: var(--ds-bg);
+  position: relative;
+  z-index: 0;
+}
+
+.ds-table th.num,
+.ds-table td.num {
+  text-align: right;
 }
 
 .ds-table tbody tr.ds-row {
@@ -401,12 +410,22 @@ main {
   text-align: right;
 }
 
-.meta-col {
+.ds-table tbody td.meta-col {
   background: rgba(15, 20, 28, 0.55);
 }
 
-.meta-col-first {
+.ds-table thead th.meta-col {
+  background: #0e1319;
+}
+
+.ds-table tbody td.meta-col-first {
   box-shadow: inset 1px 0 0 var(--ds-border);
+}
+
+.ds-table thead th.meta-col-first {
+  box-shadow:
+    inset 1px 0 0 var(--ds-border-strong),
+    0 1px 0 var(--ds-border);
 }
 
 .ds-table tbody tr.ds-row:hover td.meta-col {
@@ -466,6 +485,8 @@ main {
   width: 32px;
   height: 32px;
   flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 8px;
 }
 
 .token-img {
