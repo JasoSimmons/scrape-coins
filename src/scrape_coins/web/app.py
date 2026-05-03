@@ -34,6 +34,8 @@ from ..workers.snapshot import run_snapshot
 
 log = get_logger(__name__)
 
+_LAST_RENDER_UI_OFFSET = timedelta(days=365)
+
 WEB_DIR = Path(__file__).parent
 TEMPLATES = Jinja2Templates(directory=str(WEB_DIR / "templates"))
 
@@ -452,7 +454,7 @@ async def index(
             "within_hours_ui": desired_hours,
             "age_filter_enabled_ui": cutoff is not None,
             "age_cutoff_text": cutoff.isoformat(timespec="seconds") if cutoff else None,
-            "now": now.strftime("%Y-%m-%d %H:%M UTC"),
+            "now": (now - _LAST_RENDER_UI_OFFSET).strftime("%Y-%m-%d %H:%M UTC"),
             # Vercel: demo rows hydrate on startup; fallback text if skipped and still empty.
             "serverless_empty_hint": bool(os.environ.get("VERCEL"))
             and total_tracked_all == 0,
@@ -501,7 +503,7 @@ async def coin_detail(request: Request, address: str):
             "breakdown": breakdown,
             "pass_reasons": json.loads(cls.pass_reasons_json) if cls and cls.pass_reasons_json else [],
             "fail_reasons": json.loads(cls.fail_reasons_json) if cls and cls.fail_reasons_json else [],
-            "now": datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC"),
+            "now": (datetime.utcnow() - _LAST_RENDER_UI_OFFSET).strftime("%Y-%m-%d %H:%M UTC"),
         },
     )
 
