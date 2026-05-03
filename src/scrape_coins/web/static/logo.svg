@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" role="img" aria-labelledby="title">
+  <title id="title">scrape-coins</title>
+  <!-- Mark: scan-lines + token dot (original, not affiliated with any exchange) -->
+  <rect x="0.5" y="0.5" width="31" height="31" rx="8" fill="#141a22" stroke="url(#stroke)" stroke-width="1"/>
+  <defs>
+    <linearGradient id="stroke" x1="0" y1="0" x2="32" y2="32">
+      <stop stop-color="#3df4a9" stop-opacity="0.65"/>
+      <stop offset="1" stop-color="#3df4a9" stop-opacity="0.15"/>
+    </linearGradient>
+  </defs>
+  <path d="M9 12h9" stroke="#3df4a9" stroke-width="2" stroke-linecap="round"/>
+  <path d="M9 16h13" stroke="#3df4a9" stroke-width="2" stroke-linecap="round" stroke-opacity="0.85"/>
+  <path d="M9 20h7" stroke="#3df4a9" stroke-width="2" stroke-linecap="round" stroke-opacity="0.55"/>
+  <circle cx="21.5" cy="10.5" r="3.5" fill="rgba(61,244,169,0.15)" stroke="#3df4a9" stroke-width="1.25"/>
+</svg>

@@ -114,7 +114,7 @@ a:hover {
   min-width: 0;
 }
 
-.brand a {
+.brand-link {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -124,14 +124,16 @@ a:hover {
   letter-spacing: -0.02em;
 }
 
-/* Small DS-like chevron/mark — not DexScreener trademark */
-.logo-ds {
-  width: 22px;
-  height: 22px;
-  border-radius: 5px;
-  background: linear-gradient(135deg, var(--ds-green) 45%, transparent 45%),
-    linear-gradient(-45deg, #1f2835 52%, transparent 52%);
-  box-shadow: 0 0 0 1px rgba(61, 244, 169, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+.brand-link:hover {
+  text-decoration: none;
+}
+
+.brand-logo {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: 7px;
+  display: block;
 }
 
 .logo-text {
