@@ -8,29 +8,17 @@ discovery:
     - dexscreener_token_profiles_recent      # recently updated profiles
     - dexscreener_token_boosts_latest        # boosted (paying) tokens
     - dexscreener_token_boosts_top           # top boosted
-    - dexscreener_search_terms               # see search_terms below
-  # Free-text searches against DexScreener — useful to seed broad SOL coverage.
-  search_terms:
-    - SOL
-    - pump
-    - bonk
-    - wif
-    - moon
-    - meme
-    - usa
-    - cat
-    - dog
-    - ai16z
+  search_terms: []
   chain_id: solana
 
 dashboard_filters:
   # Default "/" view: max age since pair listing (pair_created_at, or discovered_at fallback).
   enabled: true
-  max_pair_age_hours: 2160  # ~90 days (3 months)
+  max_pair_age_hours: 8760  # 12 months (365 days)
   # Tokens discovered before we grabbed pair_created_at still show via discovered_at fallback.
   use_discovered_at_if_no_pair_created: true
-  default_list_limit: 800
-  max_list_limit: 4000
+  default_list_limit: 5000
+  max_list_limit: 10000
 
 # Dashboard sort: "team_first" — what to run with your team first (composite score).
 team_first_sort:
@@ -51,8 +39,9 @@ snapshot:
   batch_size: 30
   # Skip tokens we've already snapshotted this hour.
   min_minutes_between_snapshots: 50
-  # Stop tracking tokens with no on-chain activity for N days (saves quota).
-  prune_after_days_inactive: 21
+  # Drop rows only after this many days since last_seen_at (DexScreener touched the pair).
+  # Short windows keep DB tiny but erase older names you still want ranked; bump for yearly views.
+  prune_after_days_inactive: 400
 
 enrichment:
   # Helius DAS getTokenAccounts page size when counting holders.
@@ -74,7 +63,7 @@ classifier:
   peak_top10_concentration_max: 0.35     # excluding LP / burn / known CEX
   peak_swaps_24h_min: 500
   hours_above_50pct_peak_min: 24
-  require_lp_burned_or_locked: true
+  require_lp_burned_or_locked: false
 
   # Signs the team gave up (must-haves now):
   current_drawdown_from_ath_min: 0.90    # 0.90 = down at least 90%

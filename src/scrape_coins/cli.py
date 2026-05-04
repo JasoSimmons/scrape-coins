@@ -13,6 +13,7 @@ from .classifier import run_classifier
 from .config import get_env
 from .db import init_db
 from .logging_setup import configure_logging
+from .workers.backfill import run_backfill
 from .workers.discovery import run_discovery
 from .workers.enrich import run_enrichment
 from .workers.snapshot import prune_inactive, run_snapshot
@@ -129,6 +130,15 @@ def export_csv_cmd(
         )
     )
     console.print(f"[green]✓[/green] wrote [bold]{n}[/bold] rows to [cyan]{out}[/cyan]")
+
+
+@app.command()
+def backfill() -> None:
+    """Seed old/forgotten tokens from CoinGecko → enrich via DexScreener."""
+    _setup()
+    asyncio.run(init_db())
+    counts = asyncio.run(run_backfill())
+    _table("backfill results", counts)
 
 
 @app.command()

@@ -30,6 +30,7 @@ from ..logging_setup import get_logger
 from ..scheduler import build_scheduler
 from ..workers.discovery import run_discovery
 from ..workers.enrich import run_enrichment
+from ..workers.backfill import run_backfill
 from ..workers.snapshot import run_snapshot
 
 log = get_logger(__name__)
@@ -371,11 +372,18 @@ async def index(
             (sort_col.desc() if direction == "desc" else sort_col.asc()).nullslast(),
         )
     async with sm() as s:
+        has_image = and_(Token.image_url.is_not(None), Token.image_url != "")
+        dead_project = and_(
+            or_(Token.current_mc_usd.is_(None), Token.current_mc_usd <= 250_000),
+            or_(Token.current_volume_24h_usd.is_(None), Token.current_volume_24h_usd <= 10_000),
+        )
         query = (
             select(Token, Classification, Enrichment)
             .outerjoin(Classification, Classification.token_address == Token.address)
             .outerjoin(Enrichment, Enrichment.token_address == Token.address)
             .where(age_clause)
+            .where(has_image)
+            .where(dead_project)
         )
         if only_candidates:
             query = query.where(Classification.is_redeploy_candidate.is_(True))
@@ -420,7 +428,7 @@ async def index(
     async with sm() as s:
         tracked_window_stmt = select(sqlfunc.count()).select_from(Token).where(
             age_clause
-        )
+        ).where(has_image).where(dead_project)
         total_tracked = (await s.execute(tracked_window_stmt)).scalar() or 0
 
         cand_stmt = (
@@ -429,10 +437,12 @@ async def index(
             .join(Classification, Classification.token_address == Token.address)
             .where(Classification.is_redeploy_candidate.is_(True))
             .where(age_clause)
+            .where(has_image)
+            .where(dead_project)
         )
         total_candidates = (await s.execute(cand_stmt)).scalar() or 0
 
-        grand_total_stmt = select(sqlfunc.count()).select_from(Token)
+        grand_total_stmt = select(sqlfunc.count()).select_from(Token).where(has_image).where(dead_project)
         total_tracked_all = (await s.execute(grand_total_stmt)).scalar() or 0
 
     return TEMPLATES.TemplateResponse(
@@ -528,6 +538,11 @@ async def api_run_enrich():
 @app.post("/api/run/classify")
 async def api_run_classify():
     return JSONResponse(await run_classifier())
+
+
+@app.post("/api/run/backfill")
+async def api_run_backfill():
+    return JSONResponse(await run_backfill())
 
 
 @app.post("/api/config/reload")

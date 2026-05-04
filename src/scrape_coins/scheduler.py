@@ -8,6 +8,7 @@ from .classifier import run_classifier
 from .config import get_config
 from .logging_setup import get_logger
 from .workers.discovery import run_discovery
+from .workers.backfill import run_backfill
 from .workers.enrich import run_enrichment
 from .workers.snapshot import prune_inactive, run_snapshot
 
@@ -63,6 +64,16 @@ def build_scheduler() -> AsyncIOScheduler:
         id="classify",
         max_instances=1,
         coalesce=True,
+    )
+    sched.add_job(
+        _run_with_log,
+        "interval",
+        hours=12,
+        args=("backfill", run_backfill),
+        id="backfill",
+        max_instances=1,
+        coalesce=True,
+        next_run_time=_now(),
     )
     # Daily prune at 03:17 UTC.
     sched.add_job(
